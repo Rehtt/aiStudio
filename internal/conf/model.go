@@ -3,10 +3,10 @@ package conf
 import "fmt"
 
 type Conf struct {
-	Server *Server `yaml:"server"`
+	Server *Server `yaml:"server" comment:"服务器配置"`
 }
 type Server struct {
-	Listen string `yaml:"listen"`
+	Listen string `yaml:"listen" comment:"监听地址"`
 	Redis  Redis  `yaml:"redis"`
 	Mysql  Mysql  `yaml:"mysql"`
 	Midj   Midj   `yaml:"midj"`
@@ -27,10 +27,10 @@ type Mysql struct {
 }
 
 type Midj struct {
-	BotToken  string `yaml:"bot_token"`
-	UserToken string `yaml:"user_token"`
-	ServerID  string `yaml:"server_id"`
-	ChannelID string `yaml:"channel_id"`
+	BotToken  string `yaml:"bot_token" comment:"机器人token"`
+	UserToken string `yaml:"user_token" comment:"用户token"`
+	ServerID  string `yaml:"server_id" comment:"服务器id"`
+	ChannelID string `yaml:"channel_id" comment:"频道id"`
 }
 
 func (m Mysql) ToDSNString() string {

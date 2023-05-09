@@ -1,4 +1,0 @@
-server:
-  listen: "0.0.0.0:80"
-  midj:
-    bot_token: 123

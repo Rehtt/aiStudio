@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	ExternalAuthKey = "external-token::%s"
+	ExternalAuthKey = "external-token::"
+	ExternalLockKey = "external-lock::"
 )
 
 func ExternalAuth() goweb.HandlerFunc {
@@ -26,6 +27,8 @@ func ExternalAuth() goweb.HandlerFunc {
 			return
 		}
 		key := ExternalAuthKey + token
+		lockKey := ExternalLockKey + token
+		redis.Lock(ctx, lockKey, 1)
 		number, err := redis.DB.Get(ctx, key).Int()
 		if err != nil {
 			ctx.WriteJSON(model.CodeMap[model.ServerBad], http.StatusBadGateway)
@@ -36,6 +39,7 @@ func ExternalAuth() goweb.HandlerFunc {
 				Key:                key,
 				Number:             number,
 				ExpirationDuration: redis.DB.TTL(ctx, key).Val(),
+				LockKey:            lockKey,
 			})
 			pass = true
 			return

@@ -14,6 +14,7 @@ func Route(g *goweb.GOweb) {
 	{
 		external.Middleware(auth.ExternalAuth())
 		external.POST("/generate", generate)
+		//external.GET("/progress")
 	}
 
 	// 后台
