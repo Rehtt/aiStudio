@@ -9,3 +9,7 @@ endif
 
 build-server :
 	go build -o ./bin/$(binName)$(suffix) ./cmd/server
+
+update-kit:
+	go get -u github.com/Rehtt/Kit@master
+	go get -u github.com/Rehtt/Kit/web@master

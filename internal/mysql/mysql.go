@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"aiStudio/internal/conf"
+	"aiStudio/internal/repository/model"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -13,5 +14,11 @@ func Init(c *conf.Mysql) (err error) {
 	if err != nil {
 		return err
 	}
-	return nil
+	return AutoMigrate()
+}
+
+func AutoMigrate() error {
+	return DB.AutoMigrate(
+		&model.RecordTable{},
+	)
 }

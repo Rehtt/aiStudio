@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	ExternalAuthKey = "external-token::"
-	ExternalLockKey = "external-lock::"
+	ExternalAuthKey = "external:token:"
+	ExternalLockKey = "external:lock:"
 )
 
 func ExternalAuth() goweb.HandlerFunc {
@@ -26,25 +26,33 @@ func ExternalAuth() goweb.HandlerFunc {
 			ctx.Writer.WriteHeader(http.StatusUnauthorized)
 			return
 		}
+
 		key := ExternalAuthKey + token
 		lockKey := ExternalLockKey + token
-		redis.Lock(ctx, lockKey, 1)
-		number, err := redis.DB.Get(ctx, key).Int()
-		if err != nil {
+
+		number, _ := redis.DB.Get(ctx, key).Int()
+		if number <= 0 {
+			ctx.WriteJSON(model.CodeMap[model.ResError], http.StatusBadRequest)
+			return
+		}
+
+		// 加锁
+		if err := redis.Lock(ctx, lockKey, "1"); err != nil {
 			ctx.WriteJSON(model.CodeMap[model.ServerBad], http.StatusBadGateway)
 			return
 		}
-		if number > 0 {
-			ctx.SetValue("info", &model.ExternalInfo{
-				Key:                key,
-				Number:             number,
-				ExpirationDuration: redis.DB.TTL(ctx, key).Val(),
-				LockKey:            lockKey,
-			})
-			pass = true
-			return
-		}
-		ctx.WriteJSON(model.CodeMap[model.ResError], http.StatusUnauthorized)
+
+		number, _ = redis.DB.Get(ctx, key).Int()
+
+		ctx.SetValue("info", &model.ExternalInfo{
+			Token:              token,
+			RedisKey:           key,
+			LockKey:            lockKey,
+			Number:             number,
+			ExpirationDuration: redis.DB.TTL(ctx, key).Val(),
+		})
+		pass = true
+		return
 	}
 }
 func Auth() goweb.HandlerFunc {

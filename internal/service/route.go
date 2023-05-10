@@ -13,8 +13,10 @@ func Route(g *goweb.GOweb) {
 	// 外部
 	{
 		external.Middleware(auth.ExternalAuth())
+		external.FootMiddleware(auth.EUnlock)
+
 		external.POST("/generate", generate)
-		//external.GET("/progress")
+		external.GET("/progress", progress)
 	}
 
 	// 后台
