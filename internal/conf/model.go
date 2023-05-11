@@ -9,7 +9,7 @@ type Server struct {
 	Listen string `yaml:"listen" comment:"监听地址"`
 	Redis  Redis  `yaml:"redis"`
 	Mysql  Mysql  `yaml:"mysql"`
-	Midj   Midj   `yaml:"midj"`
+	Midj   []Midj `yaml:"midj"`
 }
 type Redis struct {
 	Addr     string `yaml:"addr"`
@@ -27,10 +27,11 @@ type Mysql struct {
 }
 
 type Midj struct {
-	BotToken  string `yaml:"bot_token" comment:"机器人token"`
-	UserToken string `yaml:"user_token" comment:"用户token"`
-	ServerID  string `yaml:"server_id" comment:"服务器id"`
-	ChannelID string `yaml:"channel_id" comment:"频道id"`
+	BotToken  string   `yaml:"bot_token" comment:"机器人token"`
+	UserToken string   `yaml:"user_token" comment:"用户token"`
+	UserID    string   `yaml:"user_id" comment:"用户id"`
+	GuildID   string   `yaml:"guild_id" comment:"服务器id"`
+	ChannelID []string `yaml:"channel_id" comment:"频道id"`
 }
 
 func (m Mysql) ToDSNString() string {

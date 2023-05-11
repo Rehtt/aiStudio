@@ -2,9 +2,10 @@ package main
 
 import (
 	"aiStudio/internal/conf"
+	"aiStudio/internal/midj/sender"
 	"aiStudio/internal/mysql"
 	"aiStudio/internal/redis"
-	"aiStudio/internal/service"
+	"aiStudio/internal/server/service"
 	"flag"
 	"github.com/Rehtt/Kit/i18n"
 	"github.com/Rehtt/Kit/log/logs"
@@ -39,10 +40,8 @@ func main() {
 	}
 	logs.Info(i18n.GetText("Mysql 初始化成功"))
 
-	//if err := midj.Init(&conf.GetServer().Midj); err != nil {
-	//	logs.Fatal(i18n.GetText("Midj 初始化失败：%s"), err)
-	//}
-	//logs.Info(i18n.GetText("Midj 初始化成功"))
+	sender.Init(conf.GetServer().Midj)
+	logs.Info(i18n.GetText("Midj 初始化成功"))
 
 	web := goweb.New()
 	service.Route(web)

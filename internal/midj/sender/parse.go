@@ -1,4 +1,4 @@
-package midj
+package sender
 
 import (
 	discord "github.com/bwmarrin/discordgo"

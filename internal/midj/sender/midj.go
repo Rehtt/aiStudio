@@ -1,24 +1,34 @@
-package midj
+package sender
 
 import (
-	"bytes"
-	"encoding/json"
+	"aiStudio/internal/conf"
+	_const "aiStudio/internal/const"
+	"aiStudio/internal/redis"
+	"context"
 	"fmt"
-	"io"
-	"net/http"
+	jsoniter "github.com/json-iterator/go"
 	"path/filepath"
 )
 
 const (
 	url       = "https://discord.com/api/v9/interactions"
-	uploadUrl = "https://discord.com/api/v9/channels/<你的频道>/attachments"
+	uploadUrl = "https://discord.com/api/v9/channels/@@channel_id@@/attachments"
 )
 
-func GenerateImage(prompt string) error {
+var (
+	confs []conf.Midj
+)
+
+func Init(c []conf.Midj) {
+	confs = c
+	go handle(context.Background()) // 队列
+}
+
+func GenerateImage(jobId, prompt string) error {
 	requestBody := ReqTriggerDiscord{
 		Type:          2,
-		GuildID:       serverId,
-		ChannelID:     channleId,
+		GuildID:       "@@guild_id@@",
+		ChannelID:     "@@channel_id@@",
 		ApplicationId: "936929561302675456",
 		SessionId:     "cb06f61453064c0983f2adae2a88c223",
 		Data: DSCommand{
@@ -43,15 +53,16 @@ func GenerateImage(prompt string) error {
 			Attachments: []ReqCommandAttachments{},
 		},
 	}
-	_, err := request(requestBody, url)
+	r, _ := jsoniter.MarshalToString(requestBody)
+	err := push(r, url, jobId)
 	return err
 }
 
-func Upscale(index int64, messageId string, messageHash string) error {
+func Upscale(jobId string, index int64, messageId string, messageHash string) error {
 	requestBody := ReqUpscaleDiscord{
 		Type:          3,
-		GuildId:       serverId,
-		ChannelId:     channleId,
+		GuildId:       "@@guild_id@@",
+		ChannelId:     "@@channel_id@@",
 		MessageFlags:  0,
 		MessageId:     messageId,
 		ApplicationId: "936929561302675456",
@@ -61,15 +72,16 @@ func Upscale(index int64, messageId string, messageHash string) error {
 			CustomId:      fmt.Sprintf("MJ::JOB::upsample::%d::%s", index, messageHash),
 		},
 	}
-	_, err := request(requestBody, url)
+	r, _ := jsoniter.MarshalToString(requestBody)
+	err := push(r, url, jobId)
 	return err
 }
 
-func MaxUpscale(messageId string, messageHash string) error {
+func MaxUpscale(jobId, messageId string, messageHash string) error {
 	requestBody := ReqUpscaleDiscord{
 		Type:          3,
-		GuildId:       serverId,
-		ChannelId:     channleId,
+		GuildId:       "@@guild_id@@",
+		ChannelId:     "@@channel_id@@",
 		MessageFlags:  0,
 		MessageId:     messageId,
 		ApplicationId: "936929561302675456",
@@ -80,19 +92,16 @@ func MaxUpscale(messageId string, messageHash string) error {
 		},
 	}
 
-	data, _ := json.Marshal(requestBody)
-
-	fmt.Println("max upscale request body: ", string(data))
-
-	_, err := request(requestBody, url)
+	r, _ := jsoniter.MarshalToString(requestBody)
+	err := push(r, url, jobId)
 	return err
 }
 
-func Variate(index int64, messageId string, messageHash string) error {
+func Variate(jobId string, index int64, messageId string, messageHash string) error {
 	requestBody := ReqVariationDiscord{
 		Type:          3,
-		GuildId:       serverId,
-		ChannelId:     channleId,
+		GuildId:       "@@guild_id@@",
+		ChannelId:     "@@channel_id@@",
 		MessageFlags:  0,
 		MessageId:     messageId,
 		ApplicationId: "936929561302675456",
@@ -102,15 +111,16 @@ func Variate(index int64, messageId string, messageHash string) error {
 			CustomId:      fmt.Sprintf("MJ::JOB::variation::%d::%s", index, messageHash),
 		},
 	}
-	_, err := request(requestBody, url)
+	r, _ := jsoniter.MarshalToString(requestBody)
+	err := push(r, url, jobId)
 	return err
 }
 
-func Reset(messageId string, messageHash string) error {
+func Reset(jobId, messageId string, messageHash string) error {
 	requestBody := ReqResetDiscord{
 		Type:          3,
-		GuildId:       serverId,
-		ChannelId:     channleId,
+		GuildId:       "@@guild_id@@",
+		ChannelId:     "@@channel_id@@",
 		MessageFlags:  0,
 		MessageId:     messageId,
 		ApplicationId: "936929561302675456",
@@ -120,15 +130,16 @@ func Reset(messageId string, messageHash string) error {
 			CustomId:      fmt.Sprintf("MJ::JOB::reroll::0::%s::SOLO", messageHash),
 		},
 	}
-	_, err := request(requestBody, url)
+	r, _ := jsoniter.MarshalToString(requestBody)
+	err := push(r, url, jobId)
 	return err
 }
 
-func Describe(uploadName string) error {
+func Describe(jobId, uploadName string) error {
 	requestBody := ReqTriggerDiscord{
 		Type:          2,
-		GuildID:       serverId,
-		ChannelID:     channleId,
+		GuildID:       "@@guild_id@@",
+		ChannelID:     "@@channel_id@@",
 		ApplicationId: "936929561302675456",
 		SessionId:     "0033db636f7ce1a951e54cdac7044de3",
 		Data: DSCommand{
@@ -157,42 +168,34 @@ func Describe(uploadName string) error {
 			}},
 		},
 	}
-	_, err := request(requestBody, url)
+	r, _ := jsoniter.MarshalToString(requestBody)
+	err := push(r, url, jobId)
 	return err
 }
 
-func Attachments(name string, size int64) (ResAttachments, error) {
-	requestBody := ReqAttachments{
-		Files: []ReqFile{{
-			Filename: name,
-			FileSize: size,
-			Id:       "1",
-		}},
-	}
-	body, err := request(requestBody, uploadUrl)
-	var data ResAttachments
-	json.Unmarshal(body, &data)
-	return data, err
-}
+//func Attachments(name string, size int64) (ResAttachments, error) {
+//	requestBody := ReqAttachments{
+//		Files: []ReqFile{{
+//			Filename: name,
+//			FileSize: size,
+//			Id:       "1",
+//		}},
+//	}
+//	r,_:=jsoniter.Marshal(requestBody)
+//	body, err := push(r, uploadUrl)
+//	var data ResAttachments
+//	json.Unmarshal(body, &data)
+//	return data, err
+//}
 
-func request(params interface{}, url string) ([]byte, error) {
-	requestData, err := json.Marshal(params)
+func push(p, u, jobId string) error {
+	data, err := jsoniter.MarshalToString(&QueueBody{
+		Params: p,
+		Url:    u,
+		JobId:  jobId,
+	})
 	if err != nil {
-		return nil, err
+		return err
 	}
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestData))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", userToken)
-	client := &http.Client{}
-	response, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-	bod, respErr := io.ReadAll(response.Body)
-	fmt.Println("response: ", string(bod), respErr, response.Status)
-	return bod, respErr
+	return redis.DB.LPush(context.Background(), _const.DISCORD_SEND_QUEUE, data).Err()
 }

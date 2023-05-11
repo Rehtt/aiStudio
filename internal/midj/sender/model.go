@@ -1,4 +1,4 @@
-package midj
+package sender
 
 type ReqTriggerDiscord struct {
 	Type          int64     `json:"type"`
@@ -90,4 +90,10 @@ type ReqCommandAttachments struct {
 	Id             string `json:"id"`
 	Filename       string `json:"filename"`
 	UploadFilename string `json:"uploaded_filename"`
+}
+
+type QueueBody struct {
+	Params string `json:"params"`
+	Url    string `json:"url"`
+	JobId  string `json:"job_id"`
 }

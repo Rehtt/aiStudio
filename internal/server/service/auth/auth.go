@@ -2,7 +2,7 @@ package auth
 
 import (
 	"aiStudio/internal/redis"
-	"aiStudio/internal/service/model"
+	model2 "aiStudio/internal/server/service/model"
 	goweb "github.com/Rehtt/Kit/web"
 	"net/http"
 )
@@ -32,19 +32,19 @@ func ExternalAuth() goweb.HandlerFunc {
 
 		number, _ := redis.DB.Get(ctx, key).Int()
 		if number <= 0 {
-			ctx.WriteJSON(model.CodeMap[model.ResError], http.StatusBadRequest)
+			ctx.WriteJSON(model2.CodeMap[model2.ResError], http.StatusBadRequest)
 			return
 		}
 
 		// 加锁
 		if err := redis.Lock(ctx, lockKey, "1"); err != nil {
-			ctx.WriteJSON(model.CodeMap[model.ServerBad], http.StatusBadGateway)
+			ctx.WriteJSON(model2.CodeMap[model2.ServerBad], http.StatusBadGateway)
 			return
 		}
 
 		number, _ = redis.DB.Get(ctx, key).Int()
 
-		ctx.SetValue("info", &model.ExternalInfo{
+		ctx.SetValue("info", &model2.ExternalInfo{
 			Token:              token,
 			RedisKey:           key,
 			LockKey:            lockKey,

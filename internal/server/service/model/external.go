@@ -16,3 +16,7 @@ type GenerateImageRequest struct {
 type GenerateImageResponse struct {
 	Id string `json:"id"`
 }
+type ProgressResponse struct {
+	Progress int    `json:"progress"`
+	ImageUrl string `json:"image_url"`
+}

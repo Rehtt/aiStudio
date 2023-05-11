@@ -8,7 +8,10 @@ endif
 .PHONY : build-server
 
 build-server :
-	go build -o ./bin/$(binName)$(suffix) ./cmd/server
+	go build -o ./bin/server$(suffix) ./cmd/server
+
+build-discord :
+	go build -o ./bin/discord$(suffix) ./cmd/discord
 
 update-kit:
 	go get -u github.com/Rehtt/Kit@master
