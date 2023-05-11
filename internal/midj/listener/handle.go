@@ -49,13 +49,13 @@ func DiscordMsgCreate(s *discord.Session, m *discord.MessageCreate) {
 	// 重新生成不发送
 	// TODO 优化 使用 From
 	if strings.Contains(m.Content, "(Waiting to start)") && !strings.Contains(m.Content, "Rerolling **") {
-		createMsg(m, FirstTrigger)
+		sendMsg(m.Message, FirstTrigger)
 		return
 	}
 
 	for _, attachment := range m.Attachments {
 		if attachment.Width > 0 && attachment.Height > 0 {
-			replay(m)
+			sendMsg(m.Message, GenerateEnd)
 			return
 		}
 	}
@@ -71,30 +71,21 @@ func DiscordMsgUpdate(s *discord.Session, m *discord.MessageUpdate) {
 	}
 
 	if strings.Contains(m.Content, "(Stopped)") {
-		updateMsg(m, GenerateEditError)
+		sendMsg(m.Message, GenerateEditError)
 		return
 	}
 
 	if len(m.Embeds) > 0 {
 		send(m.Embeds)
 	} else {
-		updateMsg(m, UpdateMsg)
+		sendMsg(m.Message, UpdateMsg)
 	}
 }
 
 type ReqCb struct {
-	Embeds        []*discord.MessageEmbed `json:"embeds,omitempty"`
-	DiscordCreate *discord.MessageCreate  `json:"discord_create,omitempty"`
-	DiscordUpdate *discord.MessageUpdate  `json:"discord_update,omitempty"`
-	Type          Scene                   `json:"type"`
-}
-
-func replay(m *discord.MessageCreate) {
-	body := ReqCb{
-		DiscordCreate: m,
-		Type:          GenerateEnd,
-	}
-	request(body)
+	Embeds     []*discord.MessageEmbed `json:"embeds,omitempty"`
+	DiscordMsg *discord.Message        `json:"discord_msg,omitempty"`
+	Type       Scene                   `json:"type"`
 }
 
 func send(embeds []*discord.MessageEmbed) {
@@ -104,20 +95,13 @@ func send(embeds []*discord.MessageEmbed) {
 	}
 	request(body)
 }
-
-func updateMsg(m *discord.MessageUpdate, t Scene) {
-	body := ReqCb{
-		DiscordUpdate: m,
-		Type:          t,
-	}
-	request(body)
-}
-
-func createMsg(m *discord.MessageCreate, t Scene) {
-	request(ReqCb{
-		DiscordCreate: m,
-		Type:          t,
-	})
+func sendMsg(m *discord.Message, t Scene) {
+	request(
+		ReqCb{
+			DiscordMsg: m,
+			Type:       t,
+		},
+	)
 }
 
 //func request(r ReqCb) {

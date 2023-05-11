@@ -69,31 +69,20 @@ func result(ctx context.Context, b *listener.ReqCb) error {
 		msgId     string
 		option    *string
 		imageUrl  *string
+		mhash     *string
 		isRelease bool
+		msg       = b.DiscordMsg
 	)
-
 	switch b.Type {
 	case listener.FirstTrigger:
-		var data = b.DiscordCreate
-		if data == nil {
-			return nil
-		}
-		msgId = data.ID
-		channleID = data.ChannelID
-		guildID = data.GuildID
 	case listener.UpdateMsg:
-		var data = b.DiscordUpdate
-		if data == nil {
-			return nil
-		}
-		msgId = data.ID
 		var userId string
 		for _, c := range confs {
-			if strings.Contains(data.Content, fmt.Sprintf("<@%s>", c.UserID)) {
+			if strings.Contains(msg.Content, fmt.Sprintf("<@%s>", c.UserID)) {
 				userId = c.UserID
 			}
 		}
-		sp := strings.Split(data.Content, fmt.Sprintf("<@%s>", userId))
+		sp := strings.Split(msg.Content, fmt.Sprintf("<@%s>", userId))
 		if len(sp) > 1 {
 			//option = &sp[len(sp)-1]
 			s := strings.Split(*option, "%>")[0]
@@ -103,40 +92,21 @@ func result(ctx context.Context, b *listener.ReqCb) error {
 			progress, _ = strconv.Atoi(s)
 			status = "gen"
 		}
-		if len(data.Attachments) > 0 {
-			imageUrl = &data.Attachments[0].URL
-		}
-
-		channleID = data.ChannelID
-		guildID = data.GuildID
 	case listener.GenerateEditError:
-		var data = b.DiscordUpdate
-		if data == nil {
-			return nil
-		}
-		option = &data.Content
-		msgId = data.ID
+		option = &msg.Content
 		status = "error"
-		channleID = data.ChannelID
-		guildID = data.GuildID
 		isRelease = true
 	case listener.GenerateEnd:
-		var data = b.DiscordCreate
-		if data == nil {
-			return nil
-		}
-		msgId = data.ID
 		progress = 100
 		status = "done"
-		channleID = data.ChannelID
-		guildID = data.GuildID
-		if len(data.Attachments) > 0 {
-			imageUrl = &data.Attachments[0].URL
-		}
 		isRelease = true
 	default:
 		return nil
 	}
+
+	msgId, mhash, imageUrl = ParseMsgIdAndHash(msg)
+	channleID = msg.ChannelID
+	guildID = msg.GuildID
 
 	genId, err := redis.DB.Get(ctx, _const.DISCORD_CHANNEL_QUEUE+guildID+"-"+channleID).Result()
 	if err != nil {
@@ -151,6 +121,7 @@ func result(ctx context.Context, b *listener.ReqCb) error {
 		MsgID:     msgId,
 		Option:    option,
 		ImageUrl:  imageUrl,
+		MHash:     mhash,
 	})
 	if err != nil {
 		return err

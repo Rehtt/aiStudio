@@ -18,5 +18,7 @@ type GenerateImageResponse struct {
 }
 type ProgressResponse struct {
 	Progress int    `json:"progress"`
+	Prompt   string `json:"prompt"`
+	Status   string `json:"status"`
 	ImageUrl string `json:"image_url"`
 }

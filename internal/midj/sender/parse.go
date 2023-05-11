@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func ParseMsgIdAndHash(m *discord.Message) (msgId string, msgHash string) {
+func ParseMsgIdAndHash(m *discord.Message) (msgId string, msgHash, imageUrl *string) {
 	msgId = m.ID
 	for _, att := range m.Attachments {
 		name := att.Filename
@@ -15,7 +15,8 @@ func ParseMsgIdAndHash(m *discord.Message) (msgId string, msgHash string) {
 		if len(s) == 0 {
 			continue
 		}
-		msgHash = s[len(s)-1]
+		msgHash = &s[len(s)-1]
+		imageUrl = &att.URL
 		break
 	}
 	return

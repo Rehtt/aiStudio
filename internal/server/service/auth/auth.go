@@ -5,12 +5,18 @@ import (
 	model2 "aiStudio/internal/server/service/model"
 	goweb "github.com/Rehtt/Kit/web"
 	"net/http"
+	"strings"
 )
 
 const (
 	ExternalAuthKey = "external:token:"
 	ExternalLockKey = "external:lock:"
 )
+
+var whiteList = []string{
+	"/progress/",
+	"/image/",
+}
 
 func ExternalAuth() goweb.HandlerFunc {
 	return func(ctx *goweb.Context) {
@@ -20,6 +26,12 @@ func ExternalAuth() goweb.HandlerFunc {
 				ctx.Stop()
 			}
 		}()
+		var inWhiteList bool
+		for _, w := range whiteList {
+			if strings.Contains(ctx.Request.URL.Path, w) {
+				inWhiteList = true
+			}
+		}
 
 		token := ctx.Request.URL.Query().Get("token")
 		if token == "" {
@@ -31,15 +43,17 @@ func ExternalAuth() goweb.HandlerFunc {
 		lockKey := ExternalLockKey + token
 
 		number, _ := redis.DB.Get(ctx, key).Int()
-		if number <= 0 {
-			ctx.WriteJSON(model2.CodeMap[model2.ResError], http.StatusBadRequest)
-			return
-		}
+		if !inWhiteList {
+			if number <= 0 {
+				ctx.WriteJSON(model2.CodeMap[model2.ResError], http.StatusBadRequest)
+				return
+			}
 
-		// 加锁
-		if err := redis.Lock(ctx, lockKey, "1"); err != nil {
-			ctx.WriteJSON(model2.CodeMap[model2.ServerBad], http.StatusBadGateway)
-			return
+			// 加锁
+			if err := redis.Lock(ctx, lockKey, "1"); err != nil {
+				ctx.WriteJSON(model2.CodeMap[model2.ServerBad], http.StatusBadGateway)
+				return
+			}
 		}
 
 		number, _ = redis.DB.Get(ctx, key).Int()
