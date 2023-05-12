@@ -85,7 +85,7 @@ func result(ctx context.Context, b *listener.ReqCb) error {
 		sp := strings.Split(msg.Content, fmt.Sprintf("<@%s>", userId))
 		if len(sp) > 1 {
 			//option = &sp[len(sp)-1]
-			s := strings.Split(*option, "%>")[0]
+			s := strings.Split(sp[len(sp)-1], "%>")[0]
 			s = strings.Split(s, "%")[0]
 			s = strings.ReplaceAll(s, "(", "")
 			s = strings.TrimSpace(s)
