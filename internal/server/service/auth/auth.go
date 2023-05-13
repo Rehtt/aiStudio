@@ -17,6 +17,7 @@ const (
 var whiteList = []string{
 	"/progress/",
 	"/image/",
+	"/info",
 }
 
 func ExternalAuth() goweb.HandlerFunc {
