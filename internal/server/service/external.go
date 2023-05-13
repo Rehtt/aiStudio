@@ -119,3 +119,15 @@ func imageUrl(ctx *goweb.Context) {
 	ctx.Writer.Header().Set("access-control-allow-origin", "*")
 	io.Copy(ctx.Writer, req.Body)
 }
+
+func ExternalInfo(ctx *goweb.Context) {
+	info, ok := ctx.GetValue("info").(*model.ExternalInfo)
+	if !ok {
+		ctx.WriteJSON(model.CodeMap[model.ServerBad], http.StatusBadGateway)
+		return
+	}
+	ctx.WriteJSON(model.Response{
+		Code: model.OK,
+		Data: info,
+	})
+}

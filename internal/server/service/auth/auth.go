@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"aiStudio/internal/conf"
 	"aiStudio/internal/redis"
 	model2 "aiStudio/internal/server/service/model"
 	goweb "github.com/Rehtt/Kit/web"
@@ -71,6 +72,10 @@ func ExternalAuth() goweb.HandlerFunc {
 }
 func Auth() goweb.HandlerFunc {
 	return func(ctx *goweb.Context) {
-
+		auth := ctx.Request.Header.Get("auth")
+		if auth == conf.GetServer().AdminKey {
+			return
+		}
+		ctx.Stop()
 	}
 }

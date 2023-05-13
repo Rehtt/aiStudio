@@ -6,10 +6,12 @@ type Conf struct {
 	Server *Server `yaml:"server" comment:"服务器配置"`
 }
 type Server struct {
-	Listen string `yaml:"listen" comment:"监听地址"`
-	Redis  Redis  `yaml:"redis"`
-	Mysql  Mysql  `yaml:"mysql"`
-	Midj   []Midj `yaml:"midj"`
+	// todo 临时鉴权
+	AdminKey string `yaml:"admin_key" comment:"key"`
+	Listen   string `yaml:"listen" comment:"监听地址"`
+	Redis    Redis  `yaml:"redis"`
+	Mysql    Mysql  `yaml:"mysql"`
+	Midj     []Midj `yaml:"midj"`
 }
 type Redis struct {
 	Addr     string `yaml:"addr"`

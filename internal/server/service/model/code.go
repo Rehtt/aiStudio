@@ -3,10 +3,10 @@ package model
 type Code int
 
 const (
+	OK       = Code(2000)
 	ResError = Code(iota + 1001)
 	ServerBad
 	RequestBad
-	OK
 )
 
 var CodeMap = map[Code]any{

@@ -9,6 +9,7 @@ func Route(g *goweb.GOweb) {
 	var (
 		api      = g.Grep("/api")
 		external = api.Grep("/external")
+		admin    = api.Grep("/admin")
 	)
 	// 外部
 	{
@@ -19,11 +20,12 @@ func Route(g *goweb.GOweb) {
 
 		external.FootMiddleware(auth2.EUnlock)
 		external.POST("/generate", generate)
+		external.GET("/info", ExternalInfo)
 	}
 
 	// 后台
 	{
-		api.Middleware(auth2.Auth())
-
+		admin.Middleware(auth2.Auth())
+		admin.POST("/set/user", SetUser)
 	}
 }

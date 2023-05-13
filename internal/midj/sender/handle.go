@@ -26,7 +26,7 @@ func handle(ctx context.Context) {
 			//	logs.Warn("sender handle error: %s", err)
 			//}
 			if len(data) != 2 {
-				time.Sleep(30 * time.Second)
+				time.Sleep(10 * time.Second)
 				continue
 			}
 
@@ -49,7 +49,7 @@ func handle(ctx context.Context) {
 		//	logs.Warn("listen handle error: %s", err)
 		//}
 		if len(data) != 2 {
-			time.Sleep(10 * time.Second)
+			time.Sleep(5 * time.Second)
 			continue
 		}
 		var b listener.ReqCb

@@ -3,11 +3,11 @@ package model
 import "time"
 
 type ExternalInfo struct {
-	Token              string
-	RedisKey           string
-	LockKey            string
-	Number             int
-	ExpirationDuration time.Duration
+	Token              string        `json:"token"`
+	RedisKey           string        `json:"-"`
+	LockKey            string        `json:"-"`
+	Number             int           `json:"number"`
+	ExpirationDuration time.Duration `json:"expiration_duration"`
 }
 
 type GenerateImageRequest struct {
