@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/Rehtt/Kit/log/logs"
 	jsoniter "github.com/json-iterator/go"
 	"io"
 	"net/http"
@@ -39,6 +40,7 @@ func handle(ctx context.Context) {
 			gid, cid, token, wait := sendJob(ctx, &b)
 			if !wait {
 				// 抛弃
+				logs.Warn("抛弃：%+v", b)
 				continue
 			}
 			b.Params = strings.NewReplacer("@@guild_id@@", gid, "@@channel_id@@", cid).Replace(b.Params)
