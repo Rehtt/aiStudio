@@ -24,7 +24,7 @@ func generate(ctx *goweb.Context) {
 	}
 
 	var req model.GenerateImageRequest
-	if err := ctx.ReadJSON(&req); err != nil || req.Prompt == "" {
+	if err := ctx.ReadJSON(&req); err != nil || req.Type == "" {
 		ctx.WriteJSON(model.CodeMap[model.RequestBad], http.StatusBadRequest)
 		return
 	}
