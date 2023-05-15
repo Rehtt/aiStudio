@@ -45,7 +45,9 @@ func handle(ctx context.Context) {
 			}
 			b.Params = strings.NewReplacer("@@guild_id@@", gid, "@@channel_id@@", cid).Replace(b.Params)
 			b.Url = strings.NewReplacer("@@guild_id@@", gid, "@@channel_id@@", cid).Replace(b.Url)
-			request(&b, token)
+			if _, err = request(&b, token); err != nil {
+				logs.Warn("request error: %s", err)
+			}
 		}
 	}()
 	for {
