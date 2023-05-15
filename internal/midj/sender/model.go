@@ -93,7 +93,9 @@ type ReqCommandAttachments struct {
 }
 
 type QueueBody struct {
-	Params string `json:"params"`
-	Url    string `json:"url"`
-	JobId  string `json:"job_id"`
+	Params    string  `json:"params"`
+	Url       string  `json:"url"`
+	JobId     string  `json:"job_id"`
+	GuildId   *string `json:"guild_id,omitempty"`
+	ChannelId *string `json:"channel_id,omitempty"`
 }

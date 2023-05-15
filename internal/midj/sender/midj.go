@@ -54,11 +54,11 @@ func GenerateImage(jobId, prompt string) error {
 		},
 	}
 	r, _ := jsoniter.MarshalToString(requestBody)
-	err := push(r, url, jobId)
+	err := push(r, url, jobId, nil, nil)
 	return err
 }
 
-func Upscale(jobId string, index int64, messageId string, messageHash string) error {
+func Upscale(jobId string, index int64, messageId string, messageHash string, guildId string, channelId string) error {
 	requestBody := ReqUpscaleDiscord{
 		Type:          3,
 		GuildId:       "@@guild_id@@",
@@ -73,11 +73,11 @@ func Upscale(jobId string, index int64, messageId string, messageHash string) er
 		},
 	}
 	r, _ := jsoniter.MarshalToString(requestBody)
-	err := push(r, url, jobId)
+	err := push(r, url, jobId, &guildId, &channelId)
 	return err
 }
 
-func MaxUpscale(jobId, messageId string, messageHash string) error {
+func MaxUpscale(jobId, messageId string, messageHash string, guildId string, channelId string) error {
 	requestBody := ReqUpscaleDiscord{
 		Type:          3,
 		GuildId:       "@@guild_id@@",
@@ -93,11 +93,11 @@ func MaxUpscale(jobId, messageId string, messageHash string) error {
 	}
 
 	r, _ := jsoniter.MarshalToString(requestBody)
-	err := push(r, url, jobId)
+	err := push(r, url, jobId, &guildId, &channelId)
 	return err
 }
 
-func Variate(jobId string, index int64, messageId string, messageHash string) error {
+func Variate(jobId string, index int64, messageId string, messageHash string, guildId string, channelId string) error {
 	requestBody := ReqVariationDiscord{
 		Type:          3,
 		GuildId:       "@@guild_id@@",
@@ -112,11 +112,11 @@ func Variate(jobId string, index int64, messageId string, messageHash string) er
 		},
 	}
 	r, _ := jsoniter.MarshalToString(requestBody)
-	err := push(r, url, jobId)
+	err := push(r, url, jobId, &guildId, &channelId)
 	return err
 }
 
-func Reset(jobId, messageId string, messageHash string) error {
+func Reset(jobId, messageId string, messageHash string, guildId string, channelId string) error {
 	requestBody := ReqResetDiscord{
 		Type:          3,
 		GuildId:       "@@guild_id@@",
@@ -131,7 +131,7 @@ func Reset(jobId, messageId string, messageHash string) error {
 		},
 	}
 	r, _ := jsoniter.MarshalToString(requestBody)
-	err := push(r, url, jobId)
+	err := push(r, url, jobId, &guildId, &channelId)
 	return err
 }
 
@@ -169,7 +169,7 @@ func Describe(jobId, uploadName string) error {
 		},
 	}
 	r, _ := jsoniter.MarshalToString(requestBody)
-	err := push(r, url, jobId)
+	err := push(r, url, jobId, nil, nil)
 	return err
 }
 
@@ -188,11 +188,13 @@ func Describe(jobId, uploadName string) error {
 //	return data, err
 //}
 
-func push(p, u, jobId string) error {
+func push(p, u, jobId string, guildId, channelId *string) error {
 	data, err := jsoniter.MarshalToString(&QueueBody{
-		Params: p,
-		Url:    u,
-		JobId:  jobId,
+		Params:    p,
+		Url:       u,
+		JobId:     jobId,
+		GuildId:   guildId,
+		ChannelId: channelId,
 	})
 	if err != nil {
 		return err

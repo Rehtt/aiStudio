@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -37,27 +38,62 @@ func generate(ctx *goweb.Context) {
 		ctx.WriteJSON(model.CodeMap[model.ServerBad], http.StatusBadGateway)
 		return
 	}
-
 	genId := pkg.GenId(info, req)
-	if err := repository.CreateRecord(&model2.RecordTable{
-		Token:    info.Token,
-		Prompt:   req.Prompt,
-		GenID:    genId,
-		Progress: 0,
-		//ParentMsgID: nil,
-		//Option:      nil,
-	}); err != nil {
+	createRecord := &model2.RecordTable{
+		Token: info.Token,
+		GenID: genId,
+	}
+	switch req.Type {
+	case model.GEN, "":
+		createRecord.Prompt = req.Prompt
+		if err := sender.GenerateImage(genId, req.Prompt); err != nil {
+			logs.Warn("sender.GenerateImage %s", err)
+			ctx.WriteJSON(model.CodeMap[model.ServerBad], http.StatusBadGateway)
+			return
+		}
+	case model.VA:
+		record, err := repository.GetRecord(req.GenId)
+		if err != nil {
+			ctx.WriteJSON(model.CodeMap[model.ServerBad], http.StatusBadGateway)
+			return
+		}
+		if record == nil || record.Status != "done" {
+			ctx.WriteJSON(model.CodeMap[model.RequestBad], http.StatusBadRequest)
+			return
+		}
+		createRecord.Option = "V" + strconv.Itoa(req.V)
+		createRecord.ParentMsgID = record.MsgID
+		if err = sender.Variate(genId, int64(req.V), record.MsgID, record.MHash, record.GuildID, record.ChannelID); err != nil {
+			logs.Warn("sender.Variate %s", err)
+			ctx.WriteJSON(model.CodeMap[model.ServerBad], http.StatusBadGateway)
+			return
+		}
+	case model.UP:
+		record, err := repository.GetRecord(req.GenId)
+		if err != nil {
+			ctx.WriteJSON(model.CodeMap[model.ServerBad], http.StatusBadGateway)
+			return
+		}
+		if record == nil || record.Status != "done" {
+			ctx.WriteJSON(model.CodeMap[model.RequestBad], http.StatusBadRequest)
+			return
+		}
+		createRecord.Option = "U" + strconv.Itoa(req.U)
+		createRecord.ParentMsgID = record.MsgID
+		if err = sender.Upscale(genId, int64(req.V), record.MsgID, record.MHash, record.GuildID, record.ChannelID); err != nil {
+			logs.Warn("sender.Upscale %s", err)
+			ctx.WriteJSON(model.CodeMap[model.ServerBad], http.StatusBadGateway)
+			return
+		}
+	default:
+		ctx.WriteJSON(model.CodeMap[model.RequestBad], http.StatusBadRequest)
+		return
+	}
+	if err := repository.CreateRecord(createRecord); err != nil {
 		logs.Warn("%s", err)
 		ctx.WriteJSON(model.CodeMap[model.ServerBad], http.StatusBadGateway)
 		return
 	}
-
-	if err := sender.GenerateImage(genId, req.Prompt); err != nil {
-		logs.Warn("%s", err)
-		ctx.WriteJSON(model.CodeMap[model.ServerBad], http.StatusBadGateway)
-		return
-	}
-
 	ctx.WriteJSON(&model.Response{
 		Code: model.OK,
 		Data: &model.GenerateImageResponse{Id: genId},

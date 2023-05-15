@@ -14,7 +14,8 @@ type RecordTable struct {
 	ChannelID   string  `json:"channel_id"`
 	MsgID       string  `json:"msg_id" gorm:"index"`
 	ParentMsgID string  `json:"parent_id" gorm:"index"`
-	Option      *string `json:"option"`
+	Option      string  `json:"option"`
 	ImageUrl    *string `json:"image_url"`
-	MHash       *string `json:"m_hash"`
+	MHash       string  `json:"m_hash"`
+	Remarks     string  `json:"remarks"`
 }

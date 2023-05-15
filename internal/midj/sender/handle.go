@@ -36,7 +36,11 @@ func handle(ctx context.Context) {
 				continue
 			}
 			// 频道锁，一个频道只能跑一个任务
-			gid, cid, token := sendJob(ctx, &b)
+			gid, cid, token, wait := sendJob(ctx, &b)
+			if !wait {
+				// 抛弃
+				continue
+			}
 			b.Params = strings.NewReplacer("@@guild_id@@", gid, "@@channel_id@@", cid).Replace(b.Params)
 			b.Url = strings.NewReplacer("@@guild_id@@", gid, "@@channel_id@@", cid).Replace(b.Url)
 			request(&b, token)
@@ -45,9 +49,7 @@ func handle(ctx context.Context) {
 	for {
 		// 结果队列
 		data, _ := redis.DB.BRPop(ctx, time.Minute, _const.DISCORD_RESULTS_QUEUE).Result()
-		//if err != nil {
-		//	logs.Warn("listen handle error: %s", err)
-		//}
+
 		if len(data) != 2 {
 			time.Sleep(5 * time.Second)
 			continue
@@ -67,10 +69,10 @@ func result(ctx context.Context, b *listener.ReqCb) error {
 		progress  int
 		status    string
 		msgId     string
-		option    *string
 		imageUrl  *string
-		mhash     *string
+		mhash     string
 		isRelease bool
+		remarks   string
 		msg       = b.DiscordMsg
 	)
 	switch b.Type {
@@ -93,7 +95,7 @@ func result(ctx context.Context, b *listener.ReqCb) error {
 			status = "gen"
 		}
 	case listener.GenerateEditError:
-		option = &msg.Content
+		remarks = msg.Content
 		status = "error"
 		isRelease = true
 	case listener.GenerateEnd:
@@ -119,9 +121,9 @@ func result(ctx context.Context, b *listener.ReqCb) error {
 		GuildID:   guildID,
 		ChannelID: channleID,
 		MsgID:     msgId,
-		Option:    option,
 		ImageUrl:  imageUrl,
 		MHash:     mhash,
+		Remarks:   remarks,
 	})
 	if err != nil {
 		return err
@@ -129,7 +131,7 @@ func result(ctx context.Context, b *listener.ReqCb) error {
 
 	if isRelease {
 		// 释放频道锁
-		if err := redis.DB.Del(ctx, _const.DISCORD_CHANNEL_QUEUE+guildID+"-"+channleID).Err(); err != nil {
+		if err = redis.DB.Del(ctx, _const.DISCORD_CHANNEL_QUEUE+guildID+"-"+channleID).Err(); err != nil {
 			return err
 		}
 	}
@@ -155,17 +157,27 @@ func request(b *QueueBody, userToken string) ([]byte, error) {
 	return bod, respErr
 }
 
-func sendJob(ctx context.Context, b *QueueBody) (guildId, channid, userToken string) {
+func sendJob(ctx context.Context, b *QueueBody) (guildId, channid, userToken string, wait bool) {
 	for {
 		for _, c := range confs {
 			guildId = c.GuildID
 			userToken = c.UserToken
+			if b.GuildId != nil && *b.GuildId != guildId {
+				continue
+			}
 			for _, channid = range c.ChannelID {
+				if b.ChannelId != nil && *b.ChannelId != channid {
+					continue
+				}
 				if redis.DB.SetNX(ctx, _const.DISCORD_CHANNEL_QUEUE+guildId+"-"+channid, b.JobId, 10*time.Minute).Val() {
 					return
 				}
+				wait = true
 			}
-			time.Sleep(5 * time.Second)
 		}
+		if !wait {
+			return
+		}
+		time.Sleep(5 * time.Second)
 	}
 }
